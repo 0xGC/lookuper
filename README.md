@@ -4,4 +4,4 @@ Prints the host discovery and generate a csv file.
 
 ## Usage
 
-lookuper.py ip_range
+python3 lookuper.py ip_range
