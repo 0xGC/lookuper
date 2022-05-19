@@ -96,8 +96,18 @@ def consulta_dns(ip):
         if not args.screen:
             csv_out = [ip,name]
             writer.writerow(csv_out)
-    except exception.Timeout:
-        pinta("warn", "DNS Timeout")
+    except resolver.NXDOMAIN:
+        pass
+        # No tengo mucha idea porque la variable no se va al main :( queria hacer un contador de timeouts, pero no
+        # consigo sacarlo ...
+        # sp.write("Algo!")
+        # counter = counter + 1
+        # sp.write(f"Timeouts Recibidos: {counter}")
+    
+    except resolver.NoNameservers:
+        pinta("bad",f"La ip {ip} devuelve cosas chungas")
+
+
 
 sip = re.sub(r'\D','_', args.ip_range)
 
@@ -106,21 +116,25 @@ if not args.screen:
     f = open(outfilename,'w')
     writer = csv.writer(f)
 
-banner()
-processes = []
 
+if __name__ == "__main__":
+    banner()
+    processes = []
 
-with yaspin(text=f"Bucando en {args.ip_range}...").blue.bold.shark.blue as sp:
-    with ThreadPoolExecutor(max_workers=args.workers) as executor:
-        for ip in ipa.IPv4Network(args.ip_range):    
-            # sp.text=f"Rango en {ip}"
-            processes.append(executor.submit(consulta_dns, ip))
-    
-    for task in as_completed(processes):
-        print(task.result())  
-    
-    sp.text = "Escaneo de DNS completado!"
-    sp.green.ok("✔")
-    
-    if not args.screen:
-        pinta("good", f'Archivos escritos en {outfilename}' )
+    with yaspin(text=f"Bucando en {args.ip_range}").blue.bold.shark.blue as sp:
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            for ip in ipa.IPv4Network(args.ip_range):
+                sp.text=f"Bucando en {args.ip_range}"   
+                processes.append(executor.submit(consulta_dns, ip))
+
+        for task in as_completed(processes):
+            if task.result() is None:
+                pass
+            else:
+                print(task.result())
+
+        sp.text = "Escaneo de DNS completado!"
+        sp.green.ok("✔")
+
+        if not args.screen:
+            pinta("good", f'Archivos escritos en {outfilename}' )
