@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # -*- coding: utf-8 -*-
 
 # ====== LOOKUPER.PY [Ver. 0.2] ==========================================
@@ -83,7 +84,9 @@ parser.add_argument('ip_range',
 parser.add_argument('--sep','-s', default=',',
                     help="formato del separador (por defecto: , ")
 parser.add_argument('--screen','-scr', help="Solo output por pantalla", action='store_true')
-parser.add_argument('--workers','-w', type=int, help="Numero de threads concurrentes", default=10)                         
+parser.add_argument('--workers','-w', type=int, help="Numero de threads concurrentes", default=10)
+parser.add_argument('--dns','-d', help="Servidor DNS al que hacer las consultas", default=False)                         
+
 
 args = parser.parse_args()
 pattern = re.compile(r'\bname = .*')
@@ -120,7 +123,9 @@ if not args.screen:
 if __name__ == "__main__":
     banner()
     processes = []
-
+    if args.dns:
+        resolver.default_resolver = resolver.Resolver(configure=False)
+        resolver.default_resolver.nameservers = [args.dns]
     with yaspin(text=f"Bucando en {args.ip_range}").blue.bold.shark.blue as sp:
         with ThreadPoolExecutor(max_workers=args.workers) as executor:
             for ip in ipa.IPv4Network(args.ip_range):
